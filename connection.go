@@ -271,6 +271,8 @@ func DefaultDialContext(connectionTimeout time.Duration) func(ctx context.Contex
 	}
 }
 
+var DefaultDial = DefaultDialContext
+
 // connectionTimeout returns the dial and handshake timeout set by the URI's
 // connection_timeout parameter, or the default when it is not positive.
 func (uri URI) connectionTimeout() time.Duration {
@@ -1787,6 +1789,9 @@ func (c *Connection) Reconnect() (err error) {
 		conn, err = dialer(c.ctx, "tcp", addr)
 		if err != nil {
 			Logger.Printf("Connection recovery dial error: %v", err)
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return err
+			}
 			continue
 		}
 
